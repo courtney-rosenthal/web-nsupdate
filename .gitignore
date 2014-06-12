@@ -1,0 +1,4 @@
+data/*.key
+data/*.private
+data/nsupdate-defs.php
+

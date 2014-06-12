@@ -1,0 +1,173 @@
+web-nsupdate - Dynamic DNS service
+
+The "web-nsupdate" package provides dynamic DNS services for domains
+you serve with the BIND9 DNS server.  This allows a domain name
+(e.g. gw.example.com) to be assigned to a dynamic (DHCP) host (such as
+a home broadband gateway router).
+
+The service is implemented as in PHP and runs under a web server (such
+as Apache). It requires access to the BIND server that is authoritative
+to the domain.
+
+Client updates may be performed any of the following ways:
+
+    * a DynDNS-compatible client (http://en.wikipedia.org/wiki/DynDNS)
+    * simple (RESTful) web request, using "curl" or a similar utility
+    * manual input via built-in web form
+
+The most recent version has been tested under Debian Linux with the
+following packages:
+
+    * bind9 (ver 9.7.3)
+    * apache2 (ver 2.2.16)
+    * php5 (ver 5.3.3)
+
+BE ADVISED: It is not easy setting up your local BIND server to do dynamic
+DNS. You need to do that to make this package work.  These instructions
+describe that process, so follow carefully. I *strongly* urge you to
+review the dnssec-keygen(8) and nsupdate(8) man pages first, so you can
+get some idea of what we are trying to accomplish.
+
+
+=== SERVER INSTALLATION DIRECTIONS ===
+
+1.  Copy the "web-nsupdate" files to a location such as
+    "/usr/local/lib/web-nsupdate".  It is OK to install somewhere else,
+    just adjust the following directions accordingly.
+
+2.  Generate a TSIG key that "web-nsupdate" will use to authenticate
+    itself to the DNS server.
+
+    SECURE THIS KEY! Do not leave readable copies around. This key can
+    be used to make changes to DNS records managed by "web-nsupdate".
+
+    Here are the steps to generate the key:
+
+	cd /usr/local/lib/web-nsupdate
+	/usr/sbin/dnssec-keygen -a HMAC-MD5 -b 512 -n HOST web-nsupdate
+	chmod 440 Kweb-nsupdate*
+	chgrp www-data Kweb-nsupdate*
+
+    In this example, change "www-data" to whatever group your web server
+    runs under.
+
+    Be patient. On my Core 2 Duo 2.66GHz server, dnssec-keygen takes
+    1:40 to execute.
+
+3. Setup the "web-nsupdate" definitions file, starting with the provided
+   sample.  This file needs to be secured, to protect the client passwords
+   from being revealed.
+
+	cd /usr/local/lib/web-nsupdate
+	cp nsupdate-defs.php.sample nsupdate-defs.php
+	chmod 640 nsupdate-defs.php
+	# Below, adjust "www-data" to the GID your web server runs under.
+	chgrp www-data nsupdate-defs.php
+	vi nsupdate-defs.php
+
+4. Verify that "nsupdate.php" has the correct path to the "nsupdate-defs.php"
+   file.
+
+	vi nsupdate.php
+	# Check the require_once() statement near the top.
+
+5. Symlink the update script into your web site.
+
+	# Below, adjust "/var/www/nsupdate.php" to a location in your web server.
+	ln -s /usr/local/lib/web-nsupdate/nsupdate.php /var/www/nsupdate.php
+
+    At this point, the "web-nsupdate" front-end is configured.  Now to
+    configure the nameserver back-end.
+
+6.  Assuming you don't already have a place for nameserver keys, create
+    a new file called "named.keys" that contains the TSIG key that
+    "web-nsupdate" will use.  The file will look something like:
+
+	key web-nsupdate {
+		algorithm HMAC-MD5;
+		secret "jzzoMR4ocgZGq5pQho2Pr5r9DDHT4lWK8QO09cpvVtpvHqaUdzktBs1DHCslpPR8PwXU3ni8zjST/5FxEwg44Q==";
+	};
+
+    Replace the "secret" value show above with the key in the
+    "Kweb-nsupdate.+157+nnnnn.private" file you generated in step 2.
+
+7.  Install the "named.keys" file to the directory where your "named.conf"
+    resides.  This file needs to be secured, to protect your namesever
+    from unauthorized updates.
+
+    If your "named.conf" directory is "/etc/bind", do:
+
+	# Below, adjust /etc/bind to directory where named.conf lives.
+	mv named.keys /etc/bind/named.keys
+	chmod 400 /etc/bind/named.keys
+	# Below, adjust "bind:bind" to the UID:GID your nameserver runs under.
+	chown bind:bind /etc/bind/named.keys
+
+8.  Add a line to your "named.conf" that says:
+
+	include "named.keys";
+
+9.  Modify your "named.conf" to list each host that web-nsupdate will
+    be updating.  If, for example, you want to allow dynamic updates
+    from hosts "host1.example.com" and "host2.example.com", then modify
+    the "example.com" stanza in "named.conf" and add two lines:
+
+	zone "example.com" {
+		type master;
+		.
+		.
+		.
+		# add the lines below, one per host in thie zone
+		update-policy {
+			grant web-nsupdate. name host1.example.com. A;
+			grant web-nsupdate. name host2.example.com. A;
+		};
+	};
+
+10. Test the update capability.  Point your web browser to the installed
+    "nsupdate.php" script.  This should bring up a form for manual
+    entry.  Submit your entry, and verify the update was successful.
+
+=== DEBUGGING ===
+
+FIXME -- THIS IS OUT OF DATE
+
+If web-nsupdate fails, it will return an error message in an HTML
+document.  Some of the common errors and their likely solutions are:
+
+* Failed opening required '/usr/local/lib/web-nsupdate/nsupdate-defs.php'
+
+    Fix the require_once() statement in "nsupdate.php" so that it
+    can find the definitions file.
+
+* Host "test.dyn.unicom.com" unknown.
+
+    Add an entry for this host to the $Hosts_Table list in
+    "nsupdate-defs.php".
+
+* Permission denied.
+
+    Check that the password used matches the one listed in the
+    $Hosts_Table entry for this host.
+
+* could not read key from /usr/local/lib/web-nsupdate/Kweb-nsupdate.+157+61241.key
+
+    Verify that the DEFAULT_NSKEY definition in your "nsupdate-defs.php"
+    file has the correct path to your TSIG key.  Verify that both the
+    ".key" and ".private" files are available in that directory and
+    readable by the web server (but, preferably, not the world).
+
+* other nsupdate issues
+
+    Review BIND configuration.
+
+
+=== FINE PRINT ===
+
+Copyright 2005, Chip Rosenthal <chip@unicom.com>.
+
+See software license at <http://www.unicom.com/sw/license.html>
+for terms of use and distribution.
+
+# $Id: README,v 1.3 2011-06-18 15:20:08 chip Exp $
+# $Source: /usr/local/var/cvs/web-nsupdate/README,v $
