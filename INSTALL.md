@@ -11,7 +11,7 @@ dynamic updates for _my-dsl-modem.example.com_, you must be running the
 authoritative name server for _example.com_.
 
 
-## Install the web-nsupdate_ package
+## Install the web-nsupdate package
 
 Copy the _web-nsupdate_ files to a location such as
 _/usr/local/lib/web-nsupdate_. It's OK to install somewhere else, just
