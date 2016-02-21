@@ -169,14 +169,22 @@ Setup the "web-nsupdate" definitions file, starting with the provided
 sample. This file needs to be secured, to protect the client passwords
 from being revealed.
 
-	cd /usr/local/lib/web-nsupdate/data
-	cp nsupdate-defs.php.sample nsupdate-defs.php
-	chmod 640 nsupdate-defs.php
-	chgrp www-data nsupdate-defs.php
-	vi nsupdate-defs.php
+    cd /usr/local/lib/web-nsupdate/data
+    cp nsupdate-defs.php.sample nsupdate-defs.php
+    chmod 640 nsupdate-defs.php
+    chgrp www-data nsupdate-defs.php
+    vi nsupdate-defs.php
 
 In this example, change "www-data" to whatever group your web server
 runs under.
+
+
+## Add to web server
+
+If your web server document root is "/var/www/html" then run:
+
+    cd /var/www/html
+    ln -s /usr/local/lib/web-nsupdate/nsupdate.php .
 
 
 ## Test the web-nsupdate
@@ -184,6 +192,13 @@ runs under.
 Test the update capability. Point your web browser to the installed
 "nsupdate.php" script. This should bring up a form for manual entry.
 Submit your entry, and verify the update was successful.
+
+
+## Setup the client
+
+Finally, setup the client to send DNS updates. The included ddns-check.sh
+is an example of the script I run on my home network to update the
+address of my broadband gateway.
 
 
 ## Debugging
