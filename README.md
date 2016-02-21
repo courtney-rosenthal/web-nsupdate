@@ -35,5 +35,5 @@ See the accompanying INSTALL.md for installation directions.
 
 This package is written by Chip Rosenthal <chip@unicom.com>
 
-The most recent version may be obtaine at: https://github.com/chip-rosenthal/web-nsupdate
+The most recent version may be obtained at: https://github.com/chip-rosenthal/web-nsupdate
 
