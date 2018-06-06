@@ -232,6 +232,10 @@ if (!empty($_REQUEST['hostaddr'])) {
 	send_error(400, "Failed to determine client address (parameter \$hostaddr).");
 }
 
+if (! filter_var($p_hostaddr, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        send_error(400, "Not a valid IPv4 address: $p_hostaddr");
+}
+
 $p_key = $_REQUEST['key'];
 if (empty($p_key)) {
 	send_error(403, "Failed to acquire authentication key (parameter \$key).");
