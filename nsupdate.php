@@ -56,6 +56,7 @@ $NSUPDATE_MANUAL_FORM = '<html>
 </tr>
 </table>
 </form>
+<p style="font-size: 80%">Your address: '.(empty($_SERVER['REMOTE_ADDR']) ? 'unknown' : $_SERVER['REMOTE_ADDR']).'</p>
 </body>
 </html>
 ';
