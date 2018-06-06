@@ -24,7 +24,8 @@ KEY="CQqSmgor8zgE"
 # I used "--insecure" because I'm doing https with a self-signed certificate.
 CURL_OPTS="--insecure"
 
-curl --silent --show-error $CURL_OPTS \
+# Force connection to IPv4 to be sure server gets correct external address.
+curl -ipv4 --silent --show-error $CURL_OPTS \
   --data "hostname=$DNS_NAME" \
   --data "key=$KEY" \
   "$SERVICE_URL" \
