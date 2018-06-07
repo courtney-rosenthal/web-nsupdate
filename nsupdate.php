@@ -116,7 +116,7 @@ function get_hostinfo($p_hostname)
 function validate_host($p_hostinfo, $p_key)
 {
 	if ($p_hostinfo["key"] != $p_key) {
-		send_error(501, "Permission denied.");
+		send_error(401, "Permission denied.");
 	}
 }
 
