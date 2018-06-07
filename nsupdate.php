@@ -7,19 +7,22 @@
 # for terms of use and distribution.
 #
 
-/**
+/*
  * Load site-specific definitions.
  */
 require("data/nsupdate-defs.php");
 
+// RR types
+define("RR_A", "A");
+define("RR_AAAA", "AAAA");
 
 /**
  * Template to generate command script for nsupdate(8).
  */
 $NSUPATE_COMMAND_TEMPLATE = 'server {$p_hostinfo["nameserver"]}
 zone $p_domain
-update delete $p_hostname
-update add $p_hostname {$p_hostinfo["ttl"]} A $p_hostaddr
+update delete $p_hostname $rrtype
+update add $p_hostname {$p_hostinfo["ttl"]} $rrtype $p_hostaddr
 send
 ';
 
@@ -42,6 +45,15 @@ $NSUPDATE_MANUAL_FORM = '<html>
 <tr>
 	<td><label for="hostaddr">Host Address:</label></td>
 	<td><input type="text" name="hostaddr" /></td>
+</tr>
+<tr>
+	<td><label for="hostaddr">Address Type:</label></td>
+	<td><select type="text" name="addrtype" >
+		<option value="" selected>automatic (default)</option>
+		<option value="ipv4">IPv4</option>
+		<option value="ipv6">IPv6</option>
+	<select>
+	</td>
 </tr>
 <tr>
 	<td><label for="key">Authentication Key:</label></td>
@@ -140,13 +152,14 @@ function extract_domain_from_hostname($p_hostname)
 /**
  * Determine whether a host is already defined to a given address in the DNS
  * @param $p_hostname  The fully qualified host name.
+ * @param $p_addrtype  The address type: "A" for IPv4, "AAAA" for IPv6
  * @param $p_hostaddr  The expected IP address of the host.
  * @param $p_nameserver  Server to query.
  * @return  If the IP address in DNS matches the $p_hostaddr value.
  */
-function host_addr_matches($p_hostname, $p_hostaddr, $p_nameserver)
+function host_addr_matches($p_hostname, $rrtype, $p_hostaddr, $p_nameserver)
 {
-	$cmd = sprintf("host -t A %s %s", escapeshellarg($p_hostname), escapeshellarg($p_nameserver));
+	$cmd = sprintf("host -t %s %s %s", $rrtype, escapeshellarg($p_hostname), escapeshellarg($p_nameserver));
 	$a = preg_split('/\s+/', trim(shell_exec($cmd)));
 	$addr = $a[count($a)-1];
 	return ($addr == $p_hostaddr);
@@ -232,8 +245,38 @@ if (!empty($_REQUEST['hostaddr'])) {
 	send_error(400, "Failed to determine client address (parameter \$hostaddr).");
 }
 
-if (! filter_var($p_hostaddr, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-        send_error(400, "Not a valid IPv4 address: $p_hostaddr");
+if (filter_var($p_hostaddr, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+	$addrtype_actual = "ipv6";
+} elseif (filter_var($p_hostaddr, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+	$addrtype_actual = "ipv4";
+} else {
+        send_error(400, "Not a valid IP address: $p_hostaddr");
+}
+
+if (!empty($_REQUEST['addrtype'])) {
+	$p_addrtype = strtolower($_REQUEST['addrtype']);
+} else {
+	$p_addrtype = "";
+}
+
+switch ($p_addrtype) {
+	case 'ipv4':
+		if ($addrtype_actual != "ipv4") {
+			send_error(400, "Not a valid IPv4 address: $p_hostaddr");
+		}
+		$rrtype = RR_A;
+		break;
+	case 'ipv6':
+		if ($addrtype_actual != "ipv6") {
+			send_error(400, "Not a valid IPv6 address: $p_hostaddr");
+		}
+		$rrtype = RR_AAAA;
+		break;
+	case '':
+		$rrtype = ($addrtype_actual == "ipv4" ? RR_A : RR_AAAA);
+		break;
+	default:
+		send_error(400, "Bad \$addrtype value: $addrtype");
 }
 
 $p_key = $_REQUEST['key'];
@@ -251,7 +294,7 @@ $p_domain = extract_domain_from_hostname($p_hostname);
 #
 # Check if address has changed.
 #
-if (host_addr_matches($p_hostname, $p_hostaddr, $p_hostinfo['nameserver'])) {
+if (host_addr_matches($p_hostname, $rrtype, $p_hostaddr, $p_hostinfo['nameserver'])) {
 	send_error(200, "Not updated - address $p_hostaddr already assigned to host $p_hostname.");
 }
 
