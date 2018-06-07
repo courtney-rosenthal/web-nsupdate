@@ -5,6 +5,9 @@ that you serve with the BIND9 DNS server. This allows devices with
 dynamic addresses on the Internet, such as a home broadband router,
 to have a stable domain name.
 
+Dynamic updates for both IPv4 and IPv6 addresses (DNS "A" and "AAAA"
+records) are supported.
+
 **IMPORTANT** -- If you do not have a BIND server already setup and
 running then stop now. This package is a front-end service to clients,
 allowing them to easily register dynamic DNS changes. It requires a

@@ -101,6 +101,10 @@ zone as shown below:
     +        };
          };
 
+This example allows IPv4 updates for host1.example.com. and
+host2.example.com.  If you want to allow IPv6 updates, repeat the lines
+but change the record type from "A" to "AAAA".
+
 
 ## Test Dynamic Update
 
