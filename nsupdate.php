@@ -30,7 +30,8 @@ send
 /**
  * Web page with form for manual entry.
  */
-$NSUPDATE_MANUAL_FORM = '<html>
+$NSUPDATE_MANUAL_FORM = '<!DOCTYPE html>
+<html>
 <head>
 <title>web-nsupdate: Manual Entry</title>
 </head>
@@ -41,10 +42,12 @@ $NSUPDATE_MANUAL_FORM = '<html>
 <tr>
 	<td><label for="hostname">Host Name:</label></td>
 	<td><input type="text" name="hostname" /></td>
+	<td style="font-size: small">Full hostname to set, like <i>gw.example.com</i></td>
 </tr>
 <tr>
 	<td><label for="hostaddr">Host Address:</label></td>
 	<td><input type="text" name="hostaddr" /></td>
+	<td style="font-size: small">Leave blank to use current address: '.(empty($_SERVER['REMOTE_ADDR']) ? 'unknown' : $_SERVER['REMOTE_ADDR']).'</td>
 </tr>
 <tr>
 	<td><label for="hostaddr">Address Type:</label></td>
@@ -52,8 +55,7 @@ $NSUPDATE_MANUAL_FORM = '<html>
 		<option value="" selected>automatic (default)</option>
 		<option value="ipv4">IPv4</option>
 		<option value="ipv6">IPv6</option>
-	<select>
-	</td>
+	</select></td>
 </tr>
 <tr>
 	<td><label for="key">Authentication Key:</label></td>
@@ -68,7 +70,6 @@ $NSUPDATE_MANUAL_FORM = '<html>
 </tr>
 </table>
 </form>
-<p style="font-size: 80%">Your address: '.(empty($_SERVER['REMOTE_ADDR']) ? 'unknown' : $_SERVER['REMOTE_ADDR']).'</p>
 </body>
 </html>
 ';
