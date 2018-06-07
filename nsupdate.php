@@ -70,6 +70,10 @@ $NSUPDATE_MANUAL_FORM = '<!DOCTYPE html>
 </tr>
 </table>
 </form>
+<address style="font-size: small">
+<hr />
+<a href="https://github.com/chip-rosenthal/web-nsupdate">fork me</a>
+</address>
 </body>
 </html>
 ';
